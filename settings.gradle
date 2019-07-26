@@ -1,0 +1,6 @@
+enableFeaturePreview('GRADLE_METADATA')
+
+rootProject.name = 'recast'
+
+include ':lib', ':kapt', ':sample:lib'/*, ':sample:android'*/
+
