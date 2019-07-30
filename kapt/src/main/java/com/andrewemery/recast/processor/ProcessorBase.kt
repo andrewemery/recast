@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable
 import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.ProcessingEnvironment
+import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
@@ -24,7 +25,7 @@ internal abstract class ProcessorBase : AbstractProcessor() {
 }
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- * java to kotlin type
+ * type name: java to kotlin type
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /**
@@ -112,8 +113,30 @@ internal fun AnnotationMirror.specOf(): AnnotationSpec {
 }
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ * code block
+ * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+internal fun CodeBlock.Builder.addFunctionCall(function: ExecutableElement): CodeBlock.Builder {
+    return addFunctionCall(function, function.parametersOf())
+}
+
+internal fun CodeBlock.Builder.addFunctionCall(function: ExecutableElement, parameters: List<ParameterSpec>):
+        CodeBlock.Builder {
+    return this.add("%L({})".replace("{}", (0 until parameters.size).joinToString { "%L" }),
+        function.simpleName.toString(), *(parameters.map { it.name }).toTypedArray())
+}
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  * processor base
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+/**
+ * Retrieve the name of the package of the given element.
+ *
+ * @param env The annotation environment.
+ */
+internal inline fun <reified T : Annotation> ProcessorBase.elements(env: RoundEnvironment): Set<Element> =
+    env.getElementsAnnotatedWith(T::class.java)
 
 /**
  * Retrieve the name of the package of the given element.

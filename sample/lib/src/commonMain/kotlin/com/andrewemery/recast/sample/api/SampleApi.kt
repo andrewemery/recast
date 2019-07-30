@@ -31,6 +31,15 @@ object SampleObject {
 }
 
 @RecastSync
+@RecastAsync
+class SampleRecastClass {
+
+    suspend fun getUser(id: String): User {
+        return User(id)
+    }
+}
+
+@RecastSync
 @RecastAsync(suffix = "Async")
 suspend fun getUsers(): List<User> {
     return listOf(User("1"))

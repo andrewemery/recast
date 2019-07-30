@@ -50,6 +50,7 @@ kotlin {
 
         val iosArm64Main by getting {
             kotlin.srcDirs("src/iosMain/kotlin")
+            kotlin.srcDirs("build/generated/source/kaptKotlin/main")
             dependsOn(commonMain)
             dependencies {
                 implementation(coroutines("core-native"))
@@ -63,6 +64,7 @@ kotlin {
 
         val iosX64Main by getting {
             kotlin.srcDirs("src/iosMain/kotlin")
+            kotlin.srcDirs("build/generated/source/kaptKotlin/main")
             dependsOn(commonMain)
             dependencies {
                 implementation(coroutines("core-native"))

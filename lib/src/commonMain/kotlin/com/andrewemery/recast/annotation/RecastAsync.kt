@@ -17,7 +17,7 @@ package com.andrewemery.recast.annotation
  *
  * @param suffix The suffix to add to the generated method name.
  */
-@Target(AnnotationTarget.FUNCTION)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
 annotation class RecastAsync(
         val suffix: String = "")

@@ -1,11 +1,9 @@
 package com.andrewemery.recast.job
 
 /**
- * Created by Andrew Emery on 2019-06-03.
+ * The [Result] represents the result (successful or exceptional) of an operation.
  *
- * The [ResultImpl] represents the result (successful or exceptional) of an operation.
- *
- * The [ResultImpl] interface closely resembles the [kotlin.Result] (which is currently not recommended
+ * The [Result] interface closely resembles the [kotlin.Result] (which is currently not recommended
  * for use outside of inline usage).
  */
 class Result<T> internal constructor(private val value: Any?) {
