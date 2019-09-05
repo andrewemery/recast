@@ -67,6 +67,12 @@ kotlin {
             kotlin.srcDirs += "src/iosTest/kotlin"
             dependsOn commonTest
         }
+
+        all {
+            languageSettings {
+                useExperimentalAnnotation('kotlin.Experimental')
+            }
+        }
     }
 }
 

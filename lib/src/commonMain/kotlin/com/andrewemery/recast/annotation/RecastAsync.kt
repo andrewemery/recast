@@ -12,7 +12,7 @@ package com.andrewemery.recast.annotation
  *
  * Generates an asynchronous function with the following signature:
  * ```
- * fun getUsers(id: Int, scope: CoroutineScope, callback: (Result<User>) -> Unit): Job
+ * fun getUsers(id: Int, scope: CoroutineScope = MainScope(), callback: (Result<User>) -> Unit): Job
  * ```
  *
  * @param suffix The suffix to add to the generated method name.
