@@ -6,7 +6,7 @@ package com.andrewemery.recast.annotation
  *
  * For example, the following annotated interface:
  * ```
- * @RecastSync
+ * @RecastAsync
  * suspend fun getUser(id: Int): User
  * ```
  *

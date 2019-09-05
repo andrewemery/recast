@@ -1,0 +1,88 @@
+plugins {
+    id "org.jetbrains.kotlin.multiplatform"
+}
+
+group = "com.andrewemery.recast"
+version = "0.0.1"
+
+kotlin {
+    jvm()
+    iosArm64 { binaries { framework { freeCompilerArgs.add("-Xobjc-generics") } } }
+    iosX64 { binaries { framework { freeCompilerArgs.add("-Xobjc-generics") } } }
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-common:$coroutines_version"
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-test-common:$kotlin_version"
+                implementation "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
+            }
+        }
+
+        jvmMain {
+            dependsOn commonMain
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            }
+        }
+
+        jvmTest {
+            dependsOn commonTest
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+                implementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+            }
+        }
+
+        iosArm64Main {
+            kotlin.srcDirs += "src/iosMain/kotlin"
+            dependsOn commonMain
+            dependencies {
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
+            }
+        }
+
+        iosArm64Test {
+            kotlin.srcDirs += "src/iosTest/kotlin"
+            dependsOn commonTest
+        }
+
+        iosX64Main {
+            kotlin.srcDirs += "src/iosMain/kotlin"
+            dependsOn commonMain
+            dependencies {
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
+            }
+        }
+
+        iosX64Test {
+            kotlin.srcDirs += "src/iosTest/kotlin"
+            dependsOn commonTest
+        }
+    }
+}
+
+/**
+ * Execute unit tests on an ios simulator.
+ *
+ * Properties:
+ * device: The type of device to simulate. Default: iPhone 8
+ */
+task iosTest {
+    def device = project.findProperty("device")?.toString() ?: "iPhone 8"
+    dependsOn 'linkDebugTestIosX64'
+    group = JavaBasePlugin.VERIFICATION_GROUP
+    description = "Execute unit tests on ${device} simulator"
+    doLast {
+        def binary = kotlin.targets.iosX64.binaries.getTest('DEBUG')
+        exec { commandLine 'xcrun', 'simctl', 'spawn', device, binary.outputFile }
+    }
+}

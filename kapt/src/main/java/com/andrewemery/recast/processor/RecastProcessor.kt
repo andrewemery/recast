@@ -4,6 +4,8 @@ package com.andrewemery.recast.processor
 
 import com.andrewemery.recast.annotation.RecastAsync
 import com.andrewemery.recast.annotation.RecastSync
+import com.andrewemery.recast.job.Job
+import com.andrewemery.recast.job.Result
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -115,14 +117,15 @@ internal class RecastProcessor : ProcessorBase() {
         val parameters = function.parametersOf()
         val receiver = function.receiver()
         val callbackType = kotlin.Function1::class.asClassName()
-            .parameterizedBy(com.andrewemery.recast.job.Result::class.asClassName().parameterizedBy(function.suspendingType), Unit::class.asClassName())
+            .parameterizedBy(Result::class.asClassName()
+                .parameterizedBy(function.suspendingType), Unit::class.asClassName())
 
         return FunSpec.builder(function.simpleName.toString() + async.suffix)
             .apply { if (receiver != null) receiver(receiver) }
             .addParameters(parameters)
             .addParameter(ParameterSpec.builder("scope", CoroutineScope::class).defaultValue("%M()", MemberName("kotlinx.coroutines", "MainScope")).build())
             .addParameter("callback", callbackType)
-            .returns(com.andrewemery.recast.job.Job::class)
+            .returns(Job::class)
             .addCode(
                 CodeBlock.builder()
                     .add("return %M(scope, operation = { ", MemberName("com.andrewemery.recast.coroutines", "runBackground"))
