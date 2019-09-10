@@ -86,3 +86,33 @@ kotlin {
 dependencies {
     kapt project(':kapt')
 }
+
+afterEvaluate {
+    tasks.each { task ->
+        if (task.name.startsWith('link') && task.name.contains('Ios')) {
+            task.dependsOn 'kaptKotlinJvm'
+        }
+    }
+}
+
+/**
+ * Build and synchronise (clear and copy) the ios framework files to the destination directory.
+ *
+ * Properties:
+ * build_type: The type of build desired. One of [debug, release]. Default: debug.
+ * platform: The target platform. One of [iphoneos, iphonesimulator]. Default: iphonesimulator.
+ * destination: The directory to sync framework files to. Sync to default location if empty.
+ */
+task iosSyncFramework(type: Sync) {
+    def buildType = project.findProperty("configuration.build.type")?.toLowerCase() ?: 'debug'
+    def platform = project.findProperty("configuration.platform")?.toLowerCase() ?: 'iphonesimulator'
+    def target = platform.contains('simulator') ? kotlin.targets.iosX64 : kotlin.targets.iosArm64
+    def framework = target.binaries.getFramework('', buildType)
+    inputs.property "mode", buildType.toUpperCase()
+    dependsOn framework.linkTask
+    def destination = project.findProperty("configuration.build.dir")
+    if (destination == null) destination = "../ios/frameworks"
+    println(buildType + " " + platform + " " + destination)
+    from { framework.outputFile.parentFile }
+    into destination
+}
