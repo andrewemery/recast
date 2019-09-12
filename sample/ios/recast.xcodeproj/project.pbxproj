@@ -49,7 +49,7 @@
 
 /* Begin PBXFileReference section */
 		9B4316B223274E1A0064DD97 /* lib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = lib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		9B4316B323274E1B0064DD97 /* app copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "app copy-Info.plist"; path = "/Users/Shared/dev/projects/recast/sample/ios/app copy-Info.plist"; sourceTree = "<absolute>"; };
+		9B4316B323274E1B0064DD97 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = /Users/Shared/dev/projects/recast/sample/ios/Info.plist; sourceTree = "<absolute>"; };
 		F861D7DD207FA40F0085E80D /* recast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = recast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F861D7E0207FA40F0085E80D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F861D7E2207FA40F0085E80D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -88,7 +88,7 @@
 				F861D7DF207FA40F0085E80D /* recast */,
 				F861D7F4207FA4100085E80D /* recastTests */,
 				F861D7DE207FA40F0085E80D /* Products */,
-				9B4316B323274E1B0064DD97 /* app copy-Info.plist */,
+				9B4316B323274E1B0064DD97 /* Info.plist */,
 			);
 			sourceTree = "<group>";
 		};

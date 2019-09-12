@@ -47,6 +47,7 @@ kotlin {
             dependsOn commonMain
             dependencies {
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
+                implementation "co.touchlab:stately:0.9.3"
             }
         }
 
@@ -60,6 +61,7 @@ kotlin {
             dependsOn commonMain
             dependencies {
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
+                implementation "co.touchlab:stately:0.9.3"
             }
         }
 
