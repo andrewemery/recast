@@ -16,8 +16,10 @@ package com.andrewemery.recast.annotation
  * ```
  *
  * @param suffix The suffix to add to the generated method name.
+ * @param scoped Whether generated methods include a scope parameter (true) or use the ```GlobalScope``` (false).
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
 annotation class RecastAsync(
-        val suffix: String = "")
+        val suffix: String = "",
+        val scoped: Boolean = false)

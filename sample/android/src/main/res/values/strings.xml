@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">sample</string>
+    <string name="app_name">recast</string>
+    <string name="action_settings">Settings</string>
 </resources>

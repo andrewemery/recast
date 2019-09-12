@@ -1,6 +1,6 @@
-# Recast [work in progress]
+# Recast
 
-Recast Kotlin multiplatform coroutines into consumable iOS methods.
+Recast turns Kotlin Multiplatform coroutines into consumable iOS methods.
 
 ## Introduction
 
@@ -8,16 +8,16 @@ Recast Kotlin multiplatform coroutines into consumable iOS methods.
 
 ```kotlin
 @RecastAsync
-suspend fun getUser(id: Int): User = withContext(Dispatchers.IO) { ... }
+suspend fun getUser(id: Int): User { ... }
 ```
 
-&nbsp;2. At compile-time, an equivalent asynchronous method is generated:
+&nbsp;2. At compile-time, an equivalent asynchronous [1] method is generated:
 
 ```kotlin
-fun getUser(id: Int, scope: CoroutineScope = MainScope(), callback: (Result<User>) -> Unit): Job
+fun getUser(id: Int, callback: (Result<User>) -> Unit): Job
 ```
 
-&nbsp;3. Consume the method in your iOS project:
+&nbsp;3. Which can be consume the method in your iOS project:
 
 ```swift
 getUser("12") { (result: Result<User>) -> Void in
@@ -26,12 +26,13 @@ getUser("12") { (result: Result<User>) -> Void in
 }
 ```
 
+[1] Asynchronous: run on a background thread. See [Limitations](#asynchronous-limitations) for more information. 
+
 ## Overview
 
-When using Kotlin multiplatform to share code between Android and iOS, the use of Kotlin coroutines is very desirable. However presently, suspending functions are cannot be consumed within an iOS project.
-The simplest approach is to use coroutines internally within the multiplatform project and use synchronous calls or callbacks in the interface shared between Android and iOS.
+When using Kotlin multiplatform to share code between Android and iOS, suspending functions cannot be consumed within an iOS project.
 
-Recast allows you to use coroutines throughout your multiplatform project and automatically creates synchronous or asynchronous methods that can be consumed within your iOS project.
+Recast automatically creates synchronous or asynchronous methods that can be consumed within your iOS project.
 
 ## Integration
 
@@ -70,17 +71,19 @@ dependencies {
 
 ## RecastAsync
 
+#### Basics
+
 When the ```RecastAsync``` annotation is applied:
 
 ```kotlin
 @RecastAsync
-suspend fun getUser(id: Int): User = withContext(Dispatchers.IO) { ... }
+suspend fun getUser(id: Int): User { ... }
 ```
 
 At compile-time, an equivalent asynchronous method is generated:
 
 ```kotlin
-fun getUser(id: Int, scope: CoroutineScope = MainScope(), callback: (Result<User>) -> Unit): Job
+fun getUser(id: Int, callback: (Result<User>) -> Unit): Job
 ```
 
 Which can then be consumed in your iOS project:
@@ -92,26 +95,91 @@ getUser("12") { (result: Result<User>) -> Void in
 }
 ```
 
+#### Coroutine scope
+
+By default, the generated asynchronous method does not take a coroutine scope as a parameter.
+In such instances, the ```GlobalScope``` is used to scope the coroutine.
+
+If a custom scope is desired, the annotation can be adjusted to suit:
+
+```kotlin
+@RecastAsync(scoped = true)
+suspend fun getUser(id: Int): User { ... }
+```
+
+Which generates:
+
+```kotlin
+fun getUser(id: Int, scope: CoroutineScope, callback: (Result<User>) -> Unit): Job
+```
+
+Which can then be consumed in your iOS project:
+
+```swift
+let scope = CoroutinesKt.supervisorScope()
+getUser("12", scope) { (result: Result<User>) -> Void in
+    let user: User? = result.getOrNull()
+    ...
+}
+```
+
+#### Cancellation
+
+As shown above, the generated method can pass a coroutine scope that can be used to cancel all scoped operations:
+
+```swift
+let scope = CoroutinesKt.supervisorScope()
+getUser("12", scope) { ... }
+scope.cancel()
+```
+
+The asynchronous method also returns a ```Job``` that can be used to cancel the single operation:
+
+```swift
+let job = getUser("12") { ... }
+job.cancel()
+```
+
+#### Method suffix
+
 If desired, a suffix can be added to the method name:
 
 ```kotlin
 @RecastAsync(suffix = "Async")
-suspend fun getUser(id: Int): User = withContext(Dispatchers.IO) { ... }
+suspend fun getUser(id: Int): User { ... }
 ```
 
 To produce:
 
 ```kotlin
-fun getUserAsync(id: Int, scope: CoroutineScope = MainScope(), callback: (Result<User>) -> Unit): Job
+fun getUserAsync(id: Int, callback: (Result<User>) -> Unit): Job
 ```
 
+#### Asynchronous limitations
+
+At present, multithreaded coroutines are currently [unsupported](https://github.com/Kotlin/kotlinx.coroutines/issues/462) in Kotlin/Native (the platform that iOS applications target).
+
+To workaround this, coroutines annotated with ```RecastAsync``` must be called from the iOS main thread. 
+The result of the asynchronous operation will also be returned to the main thread:
+
+```swift
+getUser("12") { (result: Result<User>) -> Void in  // must be called on the main thread
+    let user: User? = result.getOrNull()  // result returned to the main thread
+    ...
+}
+```
+
+An alternative to this approach is to use the ```RecastSync``` annotation and manage threading within your iOS project natively.
+
 ## RecastSync
+
+#### Basics
 
 When the ```RecastSync``` annotation is applied:
 
 ```kotlin
 @RecastSync
-suspend fun getUser(id: Int): User = withContext(Dispatchers.IO) { ... }
+suspend fun getUser(id: Int): User { ... }
 ```
 
 At compile-time, an equivalent synchronous method is generated (with ```Sync``` added as a suffix to the method name):
@@ -126,11 +194,13 @@ Which can then be consumed in your iOS project:
 let user: User = getUserSync("12")
 ```
 
+#### Method suffix
+
 If desired, a custom method suffix can be used instead:
 
 ```kotlin
 @RecastSync(suffix = "Synchronous")
-suspend fun getUser(id: Int): User = withContext(Dispatchers.IO) { ... }
+suspend fun getUser(id: Int): User { ... }
 ```
 
 To produce:
@@ -139,7 +209,9 @@ To produce:
 fun getUserSynchronous(id: Int): User
 ```
 
-## Object support
+## Annotation support
+
+#### Basics
 
 Recast annotations can be added to the following objects:
 1. Function
@@ -152,22 +224,32 @@ When the annotation is added to a class, interface or object:
 ```kotlin
 @RecastAsync
 class UserRepository {
-    suspend fun getUser(id: Int): User = withContext(Dispatchers.IO) { ... }
-    suspend fun getUsers(): List<User> = withContext(Dispatchers.IO) { ... }
+    suspend fun getUser(id: Int): User { ... }
+    suspend fun getUsers(): List<User> { ... }
 }
 ```
 
 Equivalent extension functions are generated for all suspending functions on the target class:
 
 ```kotlin
-fun UserRepository.getUser(id: Int, scope: CoroutineScope = MainScope(), callback: (Result<User>) -> Unit): Job = ...
-fun UserRepository.getUsers(scope: CoroutineScope = MainScope(), callback: (Result<List<User>>) -> Unit): Job = ...
+fun UserRepository.getUser(id: Int, callback: (Result<User>) -> Unit): Job = ...
+fun UserRepository.getUsers(callback: (Result<List<User>>) -> Unit): Job = ...
 ```
 
-## Kotlin multiplatform coroutine support
+#### 
 
-The bad news about coroutine support for iOS applications is that multithreaded coroutines are currently [unsupported](https://github.com/Kotlin/kotlinx.coroutines/issues/462) in Kotlin/Native (the platform that iOS applications target).
+Annotations set against methods override those set against a parent. For example, the following code:
+ 
+```kotlin
+@RecastAsync(scoped = true)
+class UserRepository {
+    @RecastAsync(suffix = "Async")
+    suspend fun getUser(id: Int): User { ... }
+}
+```
 
-The current workaround (implemented in the ```Dispatchers.IO``` value provided in this library) is to use the iOS main thread to execute coroutines on (which is more than likely unsuitable for most applications).
+Generates the following (where the method annotation overrides the parent):
 
-Until this issue is resolved it is recommended to use ```RecastSync``` to transform coroutines methods into synchronous, blocking calls and execute them within background threads managed natively (i.e. within iOS).
+```kotlin
+fun UserRepository.getUserAsync(id: Int, callback: (Result<User>) -> Unit): Job = ...
+```

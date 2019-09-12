@@ -3,48 +3,46 @@ package com.andrewemery.recast.sample.api
 import com.andrewemery.recast.annotation.RecastAsync
 import com.andrewemery.recast.annotation.RecastSync
 import com.andrewemery.recast.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
-interface SampleInterface {
+interface InterfaceExample {
 
     @RecastSync
     @RecastAsync
-    suspend fun getUser(id: String): User = withContext(Dispatchers.IO) {
-        getUsers()[0]
-    }
+    suspend fun getUser(id: String): User = User(id)
 }
 
-class SampleClass {
+class ClassExample {
 
     @RecastSync
     @RecastAsync
-    suspend fun getUser(id: String): User = withContext(Dispatchers.IO) {
-        User(id)
-    }
+    suspend fun getUser(id: String): User = User(id)
 }
 
-object SampleObject {
+object ObjectExample {
 
     @RecastSync
     @RecastAsync
-    suspend fun getUser(id: String): User = withContext(Dispatchers.IO) {
-        User(id)
-    }
+    suspend fun getUser(id: String): User = User(id)
 }
 
 @RecastSync
 @RecastAsync
-class SampleRecastClass {
+class OverrideExample {
 
-    suspend fun getUser(id: String): User = withContext(Dispatchers.IO) {
-        User(id)
-    }
+    @RecastSync(suffix = "Synchronous")  // overrides class declaration
+    suspend fun getUser(id: String): User = User(id)
 }
 
 @RecastSync
-@RecastAsync(suffix = "Async")
-suspend fun getUsers(): List<User> = withContext(Dispatchers.IO) {
-    listOf(User("1"))
+@RecastAsync(scoped = true)
+suspend fun getUserScoped(id: String): User = User(id)
+
+@RecastSync
+@RecastAsync(scoped = true)
+suspend fun getUserDelayed(id: String): User {
+    delay(1000)
+    return User(id)
 }
 
 data class User(val id: String)

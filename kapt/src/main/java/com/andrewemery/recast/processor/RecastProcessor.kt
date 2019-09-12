@@ -120,15 +120,22 @@ internal class RecastProcessor : ProcessorBase() {
             .parameterizedBy(Result::class.asClassName()
                 .parameterizedBy(function.suspendingType), Unit::class.asClassName())
 
+        val globalScope = MemberName("kotlinx.coroutines", "GlobalScope")
+        val coroutineScopePlus = MemberName("kotlinx.coroutines", "plus")
+        val dispatchers = MemberName("com.andrewemery.recast.coroutines", "Dispatchers")
+        val scope = CodeBlock.builder().add("%M.%M(%M.IO)", globalScope, coroutineScopePlus, dispatchers).build()
+
         return FunSpec.builder(function.simpleName.toString() + async.suffix)
             .apply { if (receiver != null) receiver(receiver) }
             .addParameters(parameters)
-            .addParameter(ParameterSpec.builder("scope", CoroutineScope::class).defaultValue("%M()", MemberName("kotlinx.coroutines", "MainScope")).build())
+            .apply { if (async.scoped) addParameter(ParameterSpec.builder("scope", CoroutineScope::class).defaultValue(scope).build()) }
             .addParameter("callback", callbackType)
             .returns(Job::class)
             .addCode(
                 CodeBlock.builder()
-                    .add("return %M(scope, operation = { ", MemberName("com.andrewemery.recast.coroutines", "runBackground"))
+                    .add("return %M(", MemberName("com.andrewemery.recast.coroutines", "runBackground"))
+                    .apply { if (!async.scoped) add(scope) else add("scope")}
+                    .add(", operation = { ")
                     .addFunctionCall(function)
                     .add(" }, callback = callback)")
                     .build()

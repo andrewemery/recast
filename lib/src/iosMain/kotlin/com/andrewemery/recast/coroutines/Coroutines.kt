@@ -6,9 +6,7 @@ import com.andrewemery.recast.job.Job
 import com.andrewemery.recast.job.Result
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.staticCFunction
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import platform.Foundation.NSThread
 import platform.darwin.dispatch_async_f
 import platform.darwin.dispatch_get_main_queue
@@ -22,7 +20,7 @@ actual object Dispatchers {
     // spawned as part of the recasting. this approach is taken because
     // multithreaded coroutines are currently unsupported in kotlin/native.
     // https://github.com/Kotlin/kotlinx.coroutines/issues/462
-    actual val IO: CoroutineDispatcher = Dispatchers.Unconfined
+    actual val IO: CoroutineDispatcher = kotlinx.coroutines.Dispatchers.Unconfined
 }
 
 actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T =
@@ -74,4 +72,13 @@ private class WorkerJob(private val worker: Worker) : Job {
         cancelled = true
         worker.requestTermination(false)
     }
+}
+
+// convenience method to construct a scope generally suitable to oversee a set of coroutines (within a view model for example).
+// note: to use this method within your application, expose a similar method in your multiplatform library.
+// see the sample for an example.
+fun supervisorScope(): SupervisorScope = SupervisorScope(CoroutineScope(SupervisorJob() + Dispatchers.IO))
+
+class SupervisorScope(private val scope: CoroutineScope) : CoroutineScope by scope {
+    fun cancel() = scope.cancel()
 }
