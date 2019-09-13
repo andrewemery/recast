@@ -16,7 +16,7 @@ import kotlin.native.concurrent.*
 actual object Dispatchers {
     // unconfined: working under the assumption that all asynchronous tasks will
     // either be run synchronously (with @RecastSync) on a background thread spawned
-    // manually, or run asynchronously (with @RecastAsync) on a background thread
+    // manually, or run asynchronously (with @Recast) on a background thread
     // spawned as part of the recasting. this approach is taken because
     // multithreaded coroutines are currently unsupported in kotlin/native.
     // https://github.com/Kotlin/kotlinx.coroutines/issues/462
@@ -32,7 +32,7 @@ actual fun <T> runBackground(
     operation: suspend () -> T,
     callback: (Result<T>) -> Unit
 ): Job {
-    assert(NSThread.isMainThread()) { "RecastAsync jobs must be called from the main thread" }
+    assert(NSThread.isMainThread()) { "Recast jobs must be called from the main thread" }
     val worker = Worker.start()
     val job = WorkerJob(worker)
     backgroundTask(worker, { Result.of { kotlinx.coroutines.runBlocking { operation() } } }) {

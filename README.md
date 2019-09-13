@@ -7,7 +7,7 @@ Recast turns Kotlin Multiplatform coroutines into consumable iOS methods.
 &nbsp;1. Define a suspending function in your Kotlin multiplatform project and annotate:
 
 ```kotlin
-@RecastAsync
+@Recast
 suspend fun getUser(id: Int): User { ... }
 ```
 
@@ -17,7 +17,7 @@ suspend fun getUser(id: Int): User { ... }
 fun getUser(id: Int, callback: (Result<User>) -> Unit): Job
 ```
 
-&nbsp;3. Which can be consume the method in your iOS project:
+&nbsp;3. Which can be consumed in your iOS project:
 
 ```swift
 getUser("12") { (result: Result<User>) -> Void in
@@ -30,7 +30,7 @@ getUser("12") { (result: Result<User>) -> Void in
 
 ## Overview
 
-When using Kotlin multiplatform to share code between Android and iOS, suspending functions cannot be consumed within an iOS project.
+When using Kotlin multiplatform to share code between Android and iOS, suspending functions cannot be directly called from an iOS project.
 
 Recast automatically creates synchronous or asynchronous methods that can be consumed within your iOS project.
 
@@ -38,7 +38,7 @@ Recast automatically creates synchronous or asynchronous methods that can be con
 
 Recast uses annotation processing to generate Kotlin code that can be consumed within your iOS project.
 
-The sample below shows how Recast can be integrated into a multiplatform project:
+The sample below shows how Recast can be integrated into a Multiplatform project:
 1. The iOS source set is updated to include the generated code from the annotation processor.
 2. Tasks that build iOS artifacts are updated to ensure the annotation processor is run beforehand.
 
@@ -69,14 +69,14 @@ dependencies {
 }
 ```
 
-## RecastAsync
+## Recast: asynchronous
 
 #### Basics
 
-When the ```RecastAsync``` annotation is applied:
+When the ```@Recast``` annotation is applied:
 
 ```kotlin
-@RecastAsync
+@Recast
 suspend fun getUser(id: Int): User { ... }
 ```
 
@@ -103,7 +103,7 @@ In such instances, the ```GlobalScope``` is used to scope the coroutine.
 If a custom scope is desired, the annotation can be adjusted to suit:
 
 ```kotlin
-@RecastAsync(scoped = true)
+@Recast(scoped = true)
 suspend fun getUser(id: Int): User { ... }
 ```
 
@@ -133,7 +133,7 @@ getUser("12", scope) { ... }
 scope.cancel()
 ```
 
-The asynchronous method also returns a ```Job``` that can be used to cancel the single operation:
+The asynchronous method also returns a ```Job``` that can be used to cancel a single operation:
 
 ```swift
 let job = getUser("12") { ... }
@@ -145,7 +145,7 @@ job.cancel()
 If desired, a suffix can be added to the method name:
 
 ```kotlin
-@RecastAsync(suffix = "Async")
+@Recast(suffix = "Async")
 suspend fun getUser(id: Int): User { ... }
 ```
 
@@ -159,7 +159,7 @@ fun getUserAsync(id: Int, callback: (Result<User>) -> Unit): Job
 
 At present, multithreaded coroutines are currently [unsupported](https://github.com/Kotlin/kotlinx.coroutines/issues/462) in Kotlin/Native (the platform that iOS applications target).
 
-To workaround this, coroutines annotated with ```RecastAsync``` must be called from the iOS main thread. 
+To workaround this, coroutines annotated with ```@Recast``` must be called from the iOS main thread. 
 The result of the asynchronous operation will also be returned to the main thread:
 
 ```swift
@@ -171,7 +171,7 @@ getUser("12") { (result: Result<User>) -> Void in  // must be called on the main
 
 An alternative to this approach is to use the ```RecastSync``` annotation and manage threading within your iOS project natively.
 
-## RecastSync
+## Recast: synchronous
 
 #### Basics
 
@@ -222,7 +222,7 @@ Recast annotations can be added to the following objects:
 When the annotation is added to a class, interface or object:
  
 ```kotlin
-@RecastAsync
+@Recast
 class UserRepository {
     suspend fun getUser(id: Int): User { ... }
     suspend fun getUsers(): List<User> { ... }
@@ -236,19 +236,19 @@ fun UserRepository.getUser(id: Int, callback: (Result<User>) -> Unit): Job = ...
 fun UserRepository.getUsers(callback: (Result<List<User>>) -> Unit): Job = ...
 ```
 
-#### 
+#### Overrides
 
 Annotations set against methods override those set against a parent. For example, the following code:
  
 ```kotlin
-@RecastAsync(scoped = true)
+@Recast(scoped = true)
 class UserRepository {
-    @RecastAsync(suffix = "Async")
+    @Recast(suffix = "Async")
     suspend fun getUser(id: Int): User { ... }
 }
 ```
 
-Generates the following (where the method annotation overrides the parent):
+Generates the following method (note how the the method annotation has overriden the parent):
 
 ```kotlin
 fun UserRepository.getUserAsync(id: Int, callback: (Result<User>) -> Unit): Job = ...

@@ -1,33 +1,33 @@
 package com.andrewemery.recast.sample.api
 
-import com.andrewemery.recast.annotation.RecastAsync
+import com.andrewemery.recast.annotation.Recast
 import com.andrewemery.recast.annotation.RecastSync
 import com.andrewemery.recast.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 
 interface InterfaceExample {
 
+    @Recast
     @RecastSync
-    @RecastAsync
     suspend fun getUser(id: String): User = User(id)
 }
 
 class ClassExample {
 
+    @Recast
     @RecastSync
-    @RecastAsync
     suspend fun getUser(id: String): User = User(id)
 }
 
 object ObjectExample {
 
+    @Recast
     @RecastSync
-    @RecastAsync
     suspend fun getUser(id: String): User = User(id)
 }
 
+@Recast
 @RecastSync
-@RecastAsync
 class OverrideExample {
 
     @RecastSync(suffix = "Synchronous")  // overrides class declaration
@@ -35,11 +35,11 @@ class OverrideExample {
 }
 
 @RecastSync
-@RecastAsync(scoped = true)
+@Recast(scoped = true)
 suspend fun getUserScoped(id: String): User = User(id)
 
 @RecastSync
-@RecastAsync(scoped = true)
+@Recast(scoped = true)
 suspend fun getUserDelayed(id: String): User {
     delay(1000)
     return User(id)

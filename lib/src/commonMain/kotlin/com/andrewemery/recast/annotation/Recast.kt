@@ -1,12 +1,12 @@
 package com.andrewemery.recast.annotation
 
 /**
- * The [RecastAsync] annotation is set against a suspending function and is used to generate an
+ * The [Recast] annotation is set against a suspending function and is used to generate an
  * equivalent asynchronous method that uses a callback to return the result.
  *
  * For example, the following annotated interface:
  * ```
- * @RecastAsync
+ * @Recast
  * suspend fun getUser(id: Int): User
  * ```
  *
@@ -20,6 +20,6 @@ package com.andrewemery.recast.annotation
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class RecastAsync(
+annotation class Recast(
         val suffix: String = "",
         val scoped: Boolean = false)

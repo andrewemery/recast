@@ -2,7 +2,7 @@
 
 package com.andrewemery.recast.processor
 
-import com.andrewemery.recast.annotation.RecastAsync
+import com.andrewemery.recast.annotation.Recast
 import com.andrewemery.recast.annotation.RecastSync
 import com.andrewemery.recast.job.Job
 import com.andrewemery.recast.job.Result
@@ -18,7 +18,7 @@ import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 
 /**
- * The [RecastProcessor] is used to generate methods for the [RecastSync] and [RecastAsync] annotations.
+ * The [RecastProcessor] is used to generate methods for the [RecastSync] and [Recast] annotations.
  */
 @AutoService(Processor::class)
 @SupportedOptions("kapt.kotlin.generated")
@@ -32,7 +32,7 @@ internal class RecastProcessor : ProcessorBase() {
      * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     override fun process(annotations: MutableSet<out TypeElement>, roundEnv: RoundEnvironment): Boolean {
-        elements<RecastSync>(roundEnv).plus(elements<RecastAsync>(roundEnv))
+        elements<RecastSync>(roundEnv).plus(elements<Recast>(roundEnv))
             .forEach { element: Element ->
                 val packageName = packageName(element)
 
@@ -48,7 +48,7 @@ internal class RecastProcessor : ProcessorBase() {
                     ElementKind.CLASS -> {
                         val functions = mutableListOf<FunSpec>()
                         val sync: RecastSync? = element.getAnnotation(RecastSync::class.java)
-                        val async: RecastAsync? = element.getAnnotation(RecastAsync::class.java)
+                        val async: Recast? = element.getAnnotation(Recast::class.java)
                         for (elem: Element in element.enclosedElements.filter { it.kind == ElementKind.METHOD }) {
                             val function = elem as ExecutableElement
                             buildSyncFunction(function, sync)?.apply { functions.add(this) }
@@ -111,9 +111,9 @@ internal class RecastProcessor : ProcessorBase() {
      * @param default The default annotation to use if no annotation is present on the function itself.
      * @return The function specification, or null if no function should be generated.
      */
-    private fun buildAsyncFunction(function: ExecutableElement, default: RecastAsync? = null): FunSpec? {
+    private fun buildAsyncFunction(function: ExecutableElement, default: Recast? = null): FunSpec? {
         if (!function.isRecastValid()) return null
-        val async: RecastAsync = function.getAnnotation(RecastAsync::class.java) ?: default ?: return null
+        val async: Recast = function.getAnnotation(Recast::class.java) ?: default ?: return null
         val parameters = function.parametersOf()
         val receiver = function.receiver()
         val callbackType = kotlin.Function1::class.asClassName()
@@ -146,7 +146,7 @@ internal class RecastProcessor : ProcessorBase() {
      * Get the annotations supported by this processor.
      */
     override fun getSupportedAnnotationTypes(): Set<String> {
-        return setOf(RecastSync::class.java.canonicalName, RecastAsync::class.java.canonicalName)
+        return setOf(RecastSync::class.java.canonicalName, Recast::class.java.canonicalName)
     }
 }
 
@@ -155,7 +155,7 @@ internal class RecastProcessor : ProcessorBase() {
  */
 private fun ExecutableElement.isEnclosed(): Boolean {
     val enclosing = enclosingElement
-    return enclosing != null && (enclosing.getAnnotation(RecastSync::class.java) != null || enclosing.getAnnotation(RecastAsync::class.java) != null)
+    return enclosing != null && (enclosing.getAnnotation(RecastSync::class.java) != null || enclosing.getAnnotation(Recast::class.java) != null)
 }
 
 /**
