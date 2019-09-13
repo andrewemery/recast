@@ -20,7 +20,7 @@ class iosAppTests: XCTestCase {
     func testAsyncScoped() {
         let expectation = self.expectation(description: "user")
         let scope = CoroutinesKt.supervisorScope()
-        _1Kt.getUserScoped(id: "12", scope: scope) { (result: LibResult<User>) -> Void in  // TODO: rename base file
+        SampleApiRcKt.getUserScoped(id: "12", scope: scope) { (result: LibResult<User>) -> Void in  // TODO: rename base file
             XCTAssertTrue(result.isSuccess)
             let user: User = result.getOrNull()!
             XCTAssertEqual(user.id, "12")
@@ -32,7 +32,7 @@ class iosAppTests: XCTestCase {
     func testAsyncDelayed() {
         let expectation = self.expectation(description: "user")
         let scope = CoroutinesKt.supervisorScope()
-        _3Kt.getUserDelayed(id: "12", scope: scope) { (result: LibResult<User>) -> Void in  // TODO: rename base file
+        SampleApiRcKt.getUserDelayed(id: "12", scope: scope) { (result: LibResult<User>) -> Void in  // TODO: rename base file
             XCTAssertTrue(result.isSuccess)
             let user: User = result.getOrNull()!
             XCTAssertEqual(user.id, "12")
@@ -45,7 +45,7 @@ class iosAppTests: XCTestCase {
         let expectation = self.expectation(description: "user")
         expectation.isInverted = true
         let scope = CoroutinesKt.supervisorScope()
-        _3Kt.getUserDelayed(id: "12", scope: scope) { (result: LibResult<User>) -> Void in
+        SampleApiRcKt.getUserDelayed(id: "12", scope: scope) { (result: LibResult<User>) -> Void in
             XCTAssertTrue(result.isSuccess)
             let user: User = result.getOrNull()!
             XCTAssertEqual(user.id, "12")
@@ -58,7 +58,7 @@ class iosAppTests: XCTestCase {
     func testAsyncCancelJob() {
         let expectation = self.expectation(description: "user")
         expectation.isInverted = true
-        let job = _3Kt.getUserDelayed(id: "12", scope: CoroutinesKt.supervisorScope()) { (result: LibResult<User>) -> Void in
+        let job = SampleApiRcKt.getUserDelayed(id: "12", scope: CoroutinesKt.supervisorScope()) { (result: LibResult<User>) -> Void in
             XCTAssertTrue(result.isSuccess)
             let user: User = result.getOrNull()!
             XCTAssertEqual(user.id, "12")

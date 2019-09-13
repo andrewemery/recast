@@ -31,21 +31,34 @@ internal class RecastProcessor : ProcessorBase() {
      * process
      * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+    data class Group(val kind: ElementKind, val packageName: String, val fileName: String)
+    
     override fun process(annotations: MutableSet<out TypeElement>, roundEnv: RoundEnvironment): Boolean {
         elements<RecastSync>(roundEnv).plus(elements<Recast>(roundEnv))
-            .forEach { element: Element ->
-                val packageName = packageName(element)
-
-                when (element.kind) {
+            .groupBy { element ->
+                val fileName = when {
+                    element.kind == ElementKind.CLASS -> element.simpleName.toString()
+                    element.enclosingElement.simpleName.endsWith("Kt") -> element.enclosingElement.simpleName.toString().removeSuffix("Kt") + "Rc"
+                    else -> element.enclosingElement.simpleName.toString()
+                }
+                Group(element.kind, packageName(element), fileName)
+            }.forEach { entry: Map.Entry<Group, List<Element>> ->
+                val group = entry.key
+                when (group.kind) {
 
                     ElementKind.METHOD -> {
-                        val function = element as ExecutableElement
-                        if (function.isEnclosed()) return@forEach
-                        buildSyncFunction(function)?.apply { write(packageName, nextId++.toString(), listOf(this)) }
-                        buildAsyncFunction(function)?.apply { write(packageName, nextId++.toString(), listOf(this)) }
+                        val functions = mutableListOf<FunSpec>()
+                        for (elem: Element in entry.value) {
+                            val function = elem as ExecutableElement
+                            if (function.isEnclosed()) continue
+                            buildSyncFunction(function)?.apply { functions.add(this) }
+                            buildAsyncFunction(function)?.apply { functions.add(this) }
+                        }
+                        if (functions.size != 0) write(group.packageName, group.fileName, functions)
                     }
 
                     ElementKind.CLASS -> {
+                        val element = entry.value[0]
                         val functions = mutableListOf<FunSpec>()
                         val sync: RecastSync? = element.getAnnotation(RecastSync::class.java)
                         val async: Recast? = element.getAnnotation(Recast::class.java)
@@ -54,10 +67,10 @@ internal class RecastProcessor : ProcessorBase() {
                             buildSyncFunction(function, sync)?.apply { functions.add(this) }
                             buildAsyncFunction(function, async)?.apply { functions.add(this) }
                         }
-                        write(packageName, element.simpleName.toString(), functions)
+                        if (functions.size != 0) write(group.packageName, group.fileName, functions)
                     }
 
-                    else -> e("invalid recast annotation on: ${element.simpleName}")
+                    else -> e("invalid recast annotation on: ${group.packageName}.${group.fileName}")
                 }
             }
 
@@ -116,9 +129,11 @@ internal class RecastProcessor : ProcessorBase() {
         val async: Recast = function.getAnnotation(Recast::class.java) ?: default ?: return null
         val parameters = function.parametersOf()
         val receiver = function.receiver()
-        val callbackType = kotlin.Function1::class.asClassName()
-            .parameterizedBy(Result::class.asClassName()
-                .parameterizedBy(function.suspendingType), Unit::class.asClassName())
+        val callbackType = Function1::class.asClassName()
+            .parameterizedBy(
+                Result::class.asClassName()
+                    .parameterizedBy(function.suspendingType), Unit::class.asClassName()
+            )
 
         val globalScope = MemberName("kotlinx.coroutines", "GlobalScope")
         val coroutineScopePlus = MemberName("kotlinx.coroutines", "plus")
@@ -128,13 +143,19 @@ internal class RecastProcessor : ProcessorBase() {
         return FunSpec.builder(function.simpleName.toString() + async.suffix)
             .apply { if (receiver != null) receiver(receiver) }
             .addParameters(parameters)
-            .apply { if (async.scoped) addParameter(ParameterSpec.builder("scope", CoroutineScope::class).defaultValue(scope).build()) }
+            .apply {
+                if (async.scoped) addParameter(
+                    ParameterSpec.builder("scope", CoroutineScope::class).defaultValue(
+                        scope
+                    ).build()
+                )
+            }
             .addParameter("callback", callbackType)
             .returns(Job::class)
             .addCode(
                 CodeBlock.builder()
                     .add("return %M(", MemberName("com.andrewemery.recast.coroutines", "runBackground"))
-                    .apply { if (!async.scoped) add(scope) else add("scope")}
+                    .apply { if (!async.scoped) add(scope) else add("scope") }
                     .add(", operation = { ")
                     .addFunctionCall(function)
                     .add(" }, callback = callback)")
@@ -155,7 +176,9 @@ internal class RecastProcessor : ProcessorBase() {
  */
 private fun ExecutableElement.isEnclosed(): Boolean {
     val enclosing = enclosingElement
-    return enclosing != null && (enclosing.getAnnotation(RecastSync::class.java) != null || enclosing.getAnnotation(Recast::class.java) != null)
+    return enclosing != null && (enclosing.getAnnotation(RecastSync::class.java) != null || enclosing.getAnnotation(
+        Recast::class.java
+    ) != null)
 }
 
 /**
