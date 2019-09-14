@@ -43,16 +43,30 @@ The sample below shows how Recast can be integrated into a Multiplatform project
 2. Tasks that build iOS artifacts are updated to ensure the annotation processor is run beforehand.
 
 ```groovy
+repositories {
+    maven { url "https://dl.bintray.com/andrewemery/recast" }
+}
+
 kotlin {
-    commonMain {
+    jvmMain {
+        kotlin.srcDirs += "build/generated/source/kaptKotlin/main"
         dependencies {
-            implementation "com.andrewemery:recast:0.0.1"
+            implementation "com.andrewemery.recast:recast-jvm:0.5"
         }
     }
 
     iosArm64Main {
-        dependsOn commonMain
         kotlin.srcDirs += "build/generated/source/kaptKotlin/main"
+        dependencies {
+            implementation "com.andrewemery.recast:recast-iosArm64:0.5"
+        }
+    }
+
+    iosX64Main {
+        kotlin.srcDirs += "build/generated/source/kaptKotlin/main"
+        dependencies {
+            implementation "com.andrewemery.recast:recast-iosX64:0.5"
+        }
     }
 }
 
@@ -65,7 +79,7 @@ afterEvaluate {
 }
 
 dependencies {
-    kapt "com.andrewemery:recast-compiler:0.0.1"
+    kapt "com.andrewemery.recast:recast-compiler:0.5"
 }
 ```
 
@@ -253,3 +267,7 @@ Generates the following method (note how the the method annotation has overriden
 ```kotlin
 fun UserRepository.getUserAsync(id: Int, callback: (Result<User>) -> Unit): Job = ...
 ```
+
+## Roadmap
+
+1. Integrate with Kotlin/Native [annotation processor](https://github.com/Foso/MpApt).

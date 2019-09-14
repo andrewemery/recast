@@ -1,9 +1,14 @@
 plugins {
     id "org.jetbrains.kotlin.multiplatform"
+    id "base"
+    id "maven-publish"
 }
 
-group = "com.andrewemery.recast"
-version = "0.0.1"
+apply plugin: 'com.jfrog.bintray'
+
+group = group_id
+version = library_version
+def ARTIFACT_ID = "recast"
 
 kotlin {
     jvm()
@@ -15,7 +20,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
-                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-common:$coroutines_version"
+                api "org.jetbrains.kotlinx:kotlinx-coroutines-core-common:$coroutines_version"
             }
         }
 
@@ -30,7 +35,7 @@ kotlin {
             dependsOn commonMain
             dependencies {
                 implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+                api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
             }
         }
 
@@ -46,7 +51,7 @@ kotlin {
             kotlin.srcDirs += "src/iosMain/kotlin"
             dependsOn commonMain
             dependencies {
-                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
+                api "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
                 implementation "co.touchlab:stately:0.9.3"
             }
         }
@@ -60,7 +65,7 @@ kotlin {
             kotlin.srcDirs += "src/iosMain/kotlin"
             dependsOn commonMain
             dependencies {
-                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
+                api "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
                 implementation "co.touchlab:stately:0.9.3"
             }
         }
@@ -94,3 +99,36 @@ task iosTest {
         exec { commandLine 'xcrun', 'simctl', 'spawn', device, binary.outputFile }
     }
 }
+
+
+afterEvaluate {
+    project.publishing.publications.all {
+        groupId = group_id
+        if (it.name.contains('metadata')) artifactId = "$ARTIFACT_ID"
+        else artifactId = "$ARTIFACT_ID-$name"
+    }
+}
+
+bintray {
+    user = bintray_user
+    key = bintray_api_key
+    publish = true
+    pkg {
+        repo = bintray_repository
+        name = ARTIFACT_ID
+        userOrg = bintray_orginization
+        licenses = ['Apache-2.0']
+        vcsUrl = vcs_url
+        websiteUrl = site_url
+        issueTrackerUrl = issue_url
+        desc = library_desc
+        version {
+            name = library_version
+            vcsTag = library_version
+            released = new Date()
+        }
+    }
+}
+
+bintrayUpload.doFirst { publications = publishing.publications.collect { it.name }.findAll { it != "kotlinMultiplatform" } }
+bintrayUpload.dependsOn publishToMavenLocal
