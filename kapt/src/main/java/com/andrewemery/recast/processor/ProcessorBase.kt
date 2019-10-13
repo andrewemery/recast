@@ -31,11 +31,19 @@ internal abstract class ProcessorBase : AbstractProcessor() {
 /**
  * Convert the type into an equivalent kotlin type where applicable.
  */
-internal fun TypeName.javaToKotlinType(): TypeName =
-    if (this is ParameterizedTypeName) (rawType.javaToKotlinType() as ClassName).parameterizedBy(*typeArguments.map { it.javaToKotlinType() }.toTypedArray())
-    else JavaToKotlinClassMap.INSTANCE.mapJavaToKotlin(FqName(toString()))?.asSingleFqName()?.asString()?.let {
-        ClassName.bestGuess(it)
-    } ?: this
+internal fun TypeName.javaToKotlinType(): TypeName {
+    return when (this) {
+        is ParameterizedTypeName -> (rawType.javaToKotlinType() as ClassName).parameterizedBy(*typeArguments.map { it.javaToKotlinType() }.toTypedArray())
+        is LambdaTypeName -> LambdaTypeName.get(receiver?.javaToKotlinType(), parameters, returnType.javaToKotlinType())
+        is WildcardTypeName -> {
+            if (inTypes.isNotEmpty()) WildcardTypeName.consumerOf(inTypes[0].javaToKotlinType())
+            else WildcardTypeName.producerOf(outTypes[0].javaToKotlinType())
+        }
+        else -> JavaToKotlinClassMap.INSTANCE.mapJavaToKotlin(FqName(toString()))?.asSingleFqName()?.asString()?.let {
+            ClassName.bestGuess(it)
+        } ?: this
+    }
+}
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  * executable element: suspending

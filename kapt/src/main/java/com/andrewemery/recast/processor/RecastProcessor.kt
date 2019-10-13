@@ -57,7 +57,7 @@ internal class RecastProcessor : ProcessorBase() {
                         if (functions.size != 0) write(group.packageName, group.fileName, functions)
                     }
 
-                    ElementKind.CLASS -> {
+                    in setOf(ElementKind.CLASS, ElementKind.INTERFACE) -> {
                         val element = entry.value[0]
                         val functions = mutableListOf<FunSpec>()
                         val sync: RecastSync? = element.getAnnotation(RecastSync::class.java)

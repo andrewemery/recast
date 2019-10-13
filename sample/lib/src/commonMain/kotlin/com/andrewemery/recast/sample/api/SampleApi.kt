@@ -5,6 +5,7 @@ import com.andrewemery.recast.annotation.RecastSync
 import com.andrewemery.recast.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 
+@Recast
 interface InterfaceExample {
 
     @Recast
@@ -12,6 +13,7 @@ interface InterfaceExample {
     suspend fun getUser(id: String): User = User(id)
 }
 
+@Recast
 class ClassExample {
 
     @Recast
@@ -19,6 +21,7 @@ class ClassExample {
     suspend fun getUser(id: String): User = User(id)
 }
 
+@Recast
 object ObjectExample {
 
     @Recast
